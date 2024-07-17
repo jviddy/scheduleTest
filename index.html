@@ -3,16 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Schedule</title>
+    <title>Interactive Schedule</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="schedule-container">
+    <div class="schedule">
         <div class="hours"></div>
         <div class="events"></div>
     </div>
     <div class="event-details">
-        <h3>Event Details</h3>
         <label for="event-name">Name:</label>
         <input type="text" id="event-name">
         <label for="event-start">Start Time:</label>
@@ -20,9 +19,26 @@
         <label for="event-end">End Time:</label>
         <input type="time" id="event-end">
         <label for="event-duration">Duration:</label>
-        <input type="text" id="event-duration" readonly>
+        <select id="preset-duration">
+            <option value="30">30 minutes</option>
+            <option value="60">1 hour</option>
+            <option value="90">1 hour 30 minutes</option>
+            <option value="120">2 hours</option>
+            <option value="150">2 hours 30 minutes</option>
+            <option value="180">3 hours</option>
+            <option value="210">3 hours 30 minutes</option>
+            <option value="240">4 hours</option>
+            <option value="270">4 hours 30 minutes</option>
+            <option value="300">5 hours</option>
+            <option value="330">5 hours 30 minutes</option>
+            <option value="360">6 hours</option>
+            <option value="390">6 hours 30 minutes</option>
+            <option value="420">7 hours</option>
+            <option value="450">7 hours 30 minutes</option>
+            <option value="480">8 hours</option>
+        </select>
+        <input type="text" id="event-duration" placeholder="Custom duration (e.g., 2h 30m)">
     </div>
-
     <script src="script.js"></script>
 </body>
 </html>

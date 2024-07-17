@@ -7,18 +7,20 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('event-name').addEventListener('change', updateEventFromDetails);
     document.getElementById('event-start').addEventListener('change', updateEventFromDetails);
     document.getElementById('event-end').addEventListener('change', updateEventFromDetails);
+    document.getElementById('preset-duration').addEventListener('change', updateEventFromPresetDuration);
+    document.getElementById('event-duration').addEventListener('change', updateEventFromCustomDuration);
 });
 
 function generateSchedule() {
     const hoursContainer = document.querySelector('.hours');
     const eventsContainer = document.querySelector('.events');
-
+    
     for (let i = 7; i <= 22; i++) {
         const hour = document.createElement('div');
         hour.className = 'hour';
         hour.textContent = i < 12 ? `${i}AM` : i === 12 ? '12PM' : `${i-12}PM`;
         hoursContainer.appendChild(hour);
-
+        
         const hourLine = document.createElement('div');
         hourLine.className = 'hour-line';
         hourLine.style.top = `${(i-7) * 60}px`;
@@ -188,8 +190,11 @@ function updateEventTimes(eventElement) {
     const endHour = Math.floor((top + height) / 60) + 7;
     const endMinute = (top + height) % 60;
 
-    eventElement.dataset.start = `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}`;
-    eventElement.dataset.end = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
+    const startTime = `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}`;
+    const endTime = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
+
+    eventElement.dataset.start = startTime;
+    eventElement.dataset.end = endTime;
 
     if (selectedEvent === eventElement) {
         updateEventDetails(eventElement);
@@ -198,28 +203,30 @@ function updateEventTimes(eventElement) {
 
 function updateEventDetails(eventElement) {
     selectedEvent = eventElement;
-    const detailsBox = document.querySelector('.event-details');
-    detailsBox.style.display = 'block';
 
     document.getElementById('event-name').value = eventElement.querySelector('.event-content').textContent;
     document.getElementById('event-start').value = eventElement.dataset.start;
     document.getElementById('event-end').value = eventElement.dataset.end;
-    updateDuration();
+    
+    const [startHour, startMinute] = eventElement.dataset.start.split(':').map(Number);
+    const [endHour, endMinute] = eventElement.dataset.end.split(':').map(Number);
+    const durationInMinutes = (endHour - startHour) * 60 + (endMinute - startMinute);
+    document.getElementById('event-duration').value = formatDuration(durationInMinutes);
 }
 
 function updateEventFromDetails() {
     if (!selectedEvent) return;
 
     const name = document.getElementById('event-name').value;
-    const start = document.getElementById('event-start').value;
-    const end = document.getElementById('event-end').value;
+    const startTime = document.getElementById('event-start').value;
+    const endTime = document.getElementById('event-end').value;
 
     selectedEvent.querySelector('.event-content').textContent = name;
-    selectedEvent.dataset.start = start;
-    selectedEvent.dataset.end = end;
+    selectedEvent.dataset.start = startTime;
+    selectedEvent.dataset.end = endTime;
 
-    const [startHour, startMinute] = start.split(':').map(Number);
-    const [endHour, endMinute] = end.split(':').map(Number);
+    const [startHour, startMinute] = startTime.split(':').map(Number);
+    const [endHour, endMinute] = endTime.split(':').map(Number);
 
     const topPosition = (startHour - 7) * 60 + startMinute;
     const height = (endHour - startHour) * 60 + (endMinute - startMinute);
@@ -227,22 +234,53 @@ function updateEventFromDetails() {
     selectedEvent.style.top = `${topPosition}px`;
     selectedEvent.style.height = `${height}px`;
 
-    updateDuration();
     rearrangeOverlappingEvents();
 }
 
-function updateDuration() {
-    const start = document.getElementById('event-start').value;
-    const end = document.getElementById('event-end').value;
+function updateEventFromPresetDuration() {
+    if (!selectedEvent) return;
 
-    const [startHour, startMinute] = start.split(':').map(Number);
-    const [endHour, endMinute] = end.split(':').map(Number);
+    const durationInMinutes = parseInt(document.getElementById('preset-duration').value);
+    const startTime = document.getElementById('event-start').value;
 
-    const durationMinutes = (endHour * 60 + endMinute) - (startHour * 60 + startMinute);
-    const hours = Math.floor(durationMinutes / 60);
-    const minutes = durationMinutes % 60;
+    const [startHour, startMinute] = startTime.split(':').map(Number);
+    const endHour = startHour + Math.floor((startMinute + durationInMinutes) / 60);
+    const endMinute = (startMinute + durationInMinutes) % 60;
 
-    document.getElementById('event-duration').value = `${hours}h ${minutes}m`;
+    const endTime = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
+    document.getElementById('event-end').value = endTime;
+
+    updateEventFromDetails();
+}
+
+function updateEventFromCustomDuration() {
+    if (!selectedEvent) return;
+
+    const durationText = document.getElementById('event-duration').value;
+    const durationInMinutes = parseDuration(durationText);
+    const startTime = document.getElementById('event-start').value;
+
+    const [startHour, startMinute] = startTime.split(':').map(Number);
+    const endHour = startHour + Math.floor((startMinute + durationInMinutes) / 60);
+    const endMinute = (startMinute + durationInMinutes) % 60;
+
+    const endTime = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
+    document.getElementById('event-end').value = endTime;
+
+    updateEventFromDetails();
+}
+
+function formatDuration(minutes) {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}h ${mins}m`;
+}
+
+function parseDuration(durationText) {
+    const parts = durationText.match(/(\d+)h\s*(\d*)m?/);
+    const hours = parseInt(parts[1]) || 0;
+    const minutes = parseInt(parts[2]) || 0;
+    return hours * 60 + minutes;
 }
 
 function rearrangeOverlappingEvents() {
@@ -256,7 +294,7 @@ function rearrangeOverlappingEvents() {
     events.forEach(event => {
         const eventTop = parseInt(event.style.top);
         const eventBottom = eventTop + parseInt(event.style.height);
-
+        
         let columnIndex = columns.findIndex(column => {
             return column.every(columnEvent => {
                 const columnEventTop = parseInt(columnEvent.style.top);
