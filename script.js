@@ -1,4 +1,5 @@
 let selectedEvent = null;
+let isDraggingOrResizing = false;
 
 document.addEventListener('DOMContentLoaded', function() {
     generateSchedule();
@@ -11,13 +12,13 @@ document.addEventListener('DOMContentLoaded', function() {
 function generateSchedule() {
     const hoursContainer = document.querySelector('.hours');
     const eventsContainer = document.querySelector('.events');
-    
+
     for (let i = 7; i <= 22; i++) {
         const hour = document.createElement('div');
         hour.className = 'hour';
         hour.textContent = i < 12 ? `${i}AM` : i === 12 ? '12PM' : `${i-12}PM`;
         hoursContainer.appendChild(hour);
-        
+
         const hourLine = document.createElement('div');
         hourLine.className = 'hour-line';
         hourLine.style.top = `${(i-7) * 60}px`;
@@ -98,6 +99,7 @@ function makeEventDraggable(eventElement) {
 
     function startDragging(e) {
         isDragging = true;
+        isDraggingOrResizing = true;
         startY = e.clientY;
         originalTop = parseInt(eventElement.style.top);
         e.preventDefault();
@@ -110,11 +112,12 @@ function makeEventDraggable(eventElement) {
         eventElement.style.top = `${newTop}px`;
 
         updateEventTimes(eventElement);
-        rearrangeOverlappingEvents();
     }
 
     function stopDragging() {
         isDragging = false;
+        isDraggingOrResizing = false;
+        rearrangeOverlappingEvents();
     }
 }
 
@@ -132,12 +135,14 @@ function makeEventResizable(eventElement, topHandle, bottomHandle) {
 
     function startResizingTop(e) {
         isResizing = true;
+        isDraggingOrResizing = true;
         resizingTop = true;
         startResize(e);
     }
 
     function startResizingBottom(e) {
         isResizing = true;
+        isDraggingOrResizing = true;
         resizingTop = false;
         startResize(e);
     }
@@ -165,11 +170,12 @@ function makeEventResizable(eventElement, topHandle, bottomHandle) {
         }
 
         updateEventTimes(eventElement);
-        rearrangeOverlappingEvents();
     }
 
     function stopResizing() {
         isResizing = false;
+        isDraggingOrResizing = false;
+        rearrangeOverlappingEvents();
     }
 }
 
@@ -240,6 +246,8 @@ function updateDuration() {
 }
 
 function rearrangeOverlappingEvents() {
+    if (isDraggingOrResizing) return;
+
     const events = Array.from(document.querySelectorAll('.event'));
     events.sort((a, b) => parseInt(a.style.top) - parseInt(b.style.top));
 
@@ -248,7 +256,7 @@ function rearrangeOverlappingEvents() {
     events.forEach(event => {
         const eventTop = parseInt(event.style.top);
         const eventBottom = eventTop + parseInt(event.style.height);
-        
+
         let columnIndex = columns.findIndex(column => {
             return column.every(columnEvent => {
                 const columnEventTop = parseInt(columnEvent.style.top);
